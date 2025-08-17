@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual env
+.venv/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Runtime files you don't want to commit
+feedback_data.csv
+
+# OS/IDE
+.DS_Store
+Thumbs.db
+.vscode/
