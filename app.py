@@ -6,7 +6,6 @@ import traceback
 import pandas as pd
 import streamlit as st
 import numpy as np
-import matplotlib.pyplot as plt
 
 hf_cache_dir = os.path.join(os.getcwd(), "hf_cache")
 os.makedirs(hf_cache_dir, exist_ok=True)
