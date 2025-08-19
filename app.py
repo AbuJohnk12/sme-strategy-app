@@ -109,8 +109,8 @@ def explain_with_llm(explanation, prediction):
 
     {features_text}
 
-    Please explain in simple, friendly business language why these inputs likely led to this strategy prediction.
-    """
+    Please explain in simple, friendly business language why these inputs likely led to this strategy prediction. Also give 2-3 line suggestions on how to improve/implement the strategy.
+    Do not repeat their question."""
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",   # cheap + fast, still strong
@@ -118,9 +118,11 @@ def explain_with_llm(explanation, prediction):
             {"role": "system", "content": "You are a helpful AI assistant for small business marketing."},
             {"role": "user", "content": prompt}
         ],
-        max_tokens=400
+        max_tokens=120,
+        stop=["\n\n"]
     )
 
+    # print(f"OpenAI response: {response}")
     return response.choices[0].message.content
 
 
@@ -139,18 +141,19 @@ if st.button("🔮 Get Recommendation"):
             st.success(f"✅ Recommended Strategy: **{strategy}**")
             save_to_dataset(row, strategy, None, feature_cols, size_name, size_map_name_to_val, maturity_col, maturity, industry, budget_cat, followers_cat, budget_num, followers_num)
 
-        # try:
-        #     explanation = get_explainer(model, feature_cols, label_enc).explain_instance(
-        #         X_new.iloc[0].values,
-        #         model.predict_proba,
-        #         num_features=5
-        #     )
-        #     response = explain_with_llm(explanation, strategy)
-        # except Exception as e:
-        #     explanation = f"Error: {e}"
+        try:
+            explanation = get_explainer(model, feature_cols, label_enc).explain_instance(
+                X_new.iloc[0].values,
+                model.predict_proba,
+                num_features=5
+            )
+            # print(explanation.as_list())
+            response = explain_with_llm(explanation, strategy)
 
-        # st.subheader("🔍 Why this recommendation?")
-        # st.write(explanation)
+            st.subheader("🔍 Why this recommendation?")
+            st.write(response)
+        except Exception as e:
+            st.write(f"Error: {e}")
 
     except Exception as e:
         st.error(f"Prediction failed: {e}\n{traceback.format_exc()}")
