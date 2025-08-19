@@ -6,11 +6,7 @@ import traceback
 import pandas as pd
 import streamlit as st
 import numpy as np
-
-hf_cache_dir = os.path.join(os.getcwd(), "hf_cache")
-os.makedirs(hf_cache_dir, exist_ok=True)
-os.environ["HF_HOME"] = hf_cache_dir
-from transformers import pipeline
+from openai import OpenAI
 
 from utils.config import size_map_name_to_val, size_names, trust_questions
 from utils.data_utils import map_budget, map_followers, save_to_dataset, reset_form
@@ -76,7 +72,57 @@ X_new = pd.DataFrame([row], columns=feature_cols)
 # st.write("This is the data that will be used for prediction:")
 # st.dataframe(X_new, use_container_width=True)
 
-explainer = get_explainer(model, feature_cols, label_enc)
+# explainer = get_explainer(model, feature_cols, label_enc)
+
+@st.cache_resource
+def get_openai_client():
+    api_key = st.secrets.get("OPENAI_API_KEY") if "OPENAI_API_KEY" in st.secrets else os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise ValueError("No OpenAI API key found in st.secrets or environment variables")
+    return OpenAI(api_key=api_key)
+
+client = get_openai_client()
+
+
+def format_lime_explanation(explanation):
+    """
+    Takes lime_text explanation.as_list() output
+    and converts to a human-readable string
+    """
+    lines = []
+    for feat, weight in explanation.as_list():
+        lines.append(f"{feat} (weight: {weight:.3f})")
+    return "\n".join(lines)
+
+
+def explain_with_llm(explanation, prediction):
+    """
+    Sends the actual LIME explanation + prediction to GPT
+    and asks for a business-friendly overview
+    """
+    features_text = format_lime_explanation(explanation)
+
+    prompt = f"""
+    You are a marketing strategist.
+    The model predicted: **{prediction}**
+    These are the most important features and their weights (from LIME XAI):
+
+    {features_text}
+
+    Please explain in simple, friendly business language why these inputs likely led to this strategy prediction.
+    """
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",   # cheap + fast, still strong
+        messages=[
+            {"role": "system", "content": "You are a helpful AI assistant for small business marketing."},
+            {"role": "user", "content": prompt}
+        ],
+        max_tokens=400
+    )
+
+    return response.choices[0].message.content
+
 
 if st.button("🔮 Get Recommendation"):
     try:
@@ -92,6 +138,19 @@ if st.button("🔮 Get Recommendation"):
         else:
             st.success(f"✅ Recommended Strategy: **{strategy}**")
             save_to_dataset(row, strategy, None, feature_cols, size_name, size_map_name_to_val, maturity_col, maturity, industry, budget_cat, followers_cat, budget_num, followers_num)
+
+        # try:
+        #     explanation = get_explainer(model, feature_cols, label_enc).explain_instance(
+        #         X_new.iloc[0].values,
+        #         model.predict_proba,
+        #         num_features=5
+        #     )
+        #     response = explain_with_llm(explanation, strategy)
+        # except Exception as e:
+        #     explanation = f"Error: {e}"
+
+        # st.subheader("🔍 Why this recommendation?")
+        # st.write(explanation)
 
     except Exception as e:
         st.error(f"Prediction failed: {e}\n{traceback.format_exc()}")
