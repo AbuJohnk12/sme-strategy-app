@@ -1,9 +1,12 @@
 # Python
 __pycache__/
 *.pyc
-
+/hf_cache
 # Virtual env
 .venv/
+
+# Environment variables
+.env
 
 # Streamlit
 .streamlit/secrets.toml
