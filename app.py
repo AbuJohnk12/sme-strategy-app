@@ -97,14 +97,16 @@ def explain_with_llm(explanation, prediction):
     features_text = format_lime_explanation(explanation)
 
     prompt = f"""
-    You are a marketing strategist.
+    You are a practical marketing strategist.
     The model predicted: **{prediction}**
     These are the most important features and their weights (from LIME XAI):
 
     {features_text}
 
-    Please explain in simple, friendly business language why these inputs likely led to this strategy prediction. Also give 2-3 line suggestions on how to improve/implement the strategy.
-    Do not repeat their question."""
+    Please explain concisely why the predicted strategy fits now, then provide 3 specific next steps for a 4-6 week pilot. Do not change the predicted label.
+    
+    Do not repeat their question.
+    """
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",   # cheap + fast, still strong
