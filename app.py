@@ -17,7 +17,7 @@ from utils.ui_utils import tooltip, inject_css
 inject_css(st)
 
 st.set_page_config(page_title="SME Strategy Recommender", page_icon="📊")
-st.title("📊 SME Digital Marketing Strategy Recommender")
+st.title(" SME Digital Marketing Strategy Recommender")
 
 model, label_enc, feature_cols = load_artifacts()
 if model is not None and hasattr(model, "feature_names_in_"):
