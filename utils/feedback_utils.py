@@ -9,7 +9,7 @@ def save_feedback_to_dataset(strategy, feedback):
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "strategy": strategy,
         "feedback": feedback,
-        "business_size": st.session_state.get("size_name", ""),
+        "Business Size (No.of Employees)": st.session_state.get("size_name", ""),
         "industry": st.session_state.get("industry", "")
     }
     try:

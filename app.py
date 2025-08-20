@@ -18,7 +18,7 @@ openai.api_key = st.secrets.get("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
 inject_css(st)
 
 st.set_page_config(page_title="SME Strategy Recommender", page_icon="📊")
-st.title("📊 SME Digital Marketing Strategy Recommender")
+st.title(" SME Digital Marketing Strategy Recommender")
 
 model, label_enc, feature_cols = load_artifacts()
 if model is not None and hasattr(model, "feature_names_in_"):
@@ -36,7 +36,7 @@ follower_opts  = options_from_prefix("Followers_", feature_cols)
 st.subheader("Enter your business details")
 col1, col2 = st.columns(2)
 with col1:
-    size_name = st.selectbox("Business Size", size_names, index=0, key="size_name")
+    size_name = st.selectbox("Business Size (No.of Employees)", size_names, index=0, key="size_name")
     st.markdown(f"""Digital Marketing Maturity {tooltip('How effectively your business uses digital tools (1=basic, 5=advanced)')}""", unsafe_allow_html=True)
     maturity  = st.slider("Rate from 1 to 5", 1, 5, 1, key="maturity")
     industry  = st.selectbox("Industry", industry_opts or ["Other"], key="industry")
@@ -57,8 +57,8 @@ budget_cat    = map_budget(float(budget_num))
 followers_cat = map_followers(float(followers_num))
 
 row = {c: 0 for c in feature_cols}
-if "Business Size" in row:
-    row["Business Size"] = size_map_name_to_val[size_name]
+if "Business Size (No.of Employees)" in row:
+    row["Business Size (No.of Employees)"] = size_map_name_to_val[size_name]
 row[maturity_col] = int(maturity)
 for question, value in trust_responses.items():
     row[question] = value
