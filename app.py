@@ -47,7 +47,7 @@ trust_responses = {}
 with st.expander("🔍 Additional Trust Questions (Optional)", expanded=False):
     for ui_text, backend_name in trust_questions.items():
         if backend_name in feature_cols:
-            value = st.slider(ui_text, 1, 5, 3, key=ui_text)
+            value = st.slider(ui_text, 1, 5, 1, key=ui_text)
             trust_responses[backend_name] = value
 
 st.button("🔄 Reset Form", on_click=lambda: reset_form(st, trust_questions, feature_cols, industry_opts))
@@ -67,12 +67,6 @@ set_one_hot(row, "Budget_", budget_cat, budget_opts)
 set_one_hot(row, "Followers_", followers_cat, follower_opts)
 
 X_new = pd.DataFrame([row], columns=feature_cols)
-
-# st.subheader("Input Data for Prediction")
-# st.write("This is the data that will be used for prediction:")
-# st.dataframe(X_new, use_container_width=True)
-
-# explainer = get_explainer(model, feature_cols, label_enc)
 
 @st.cache_resource
 def get_openai_client():
@@ -118,7 +112,6 @@ def explain_with_llm(explanation, prediction):
             {"role": "system", "content": "You are a helpful AI assistant for small business marketing."},
             {"role": "user", "content": prompt}
         ],
-        max_tokens=120,
         stop=["\n\n"]
     )
 
