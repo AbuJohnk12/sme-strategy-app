@@ -3,17 +3,18 @@
 import json
 import os
 import traceback
+import openai
 import pandas as pd
 import streamlit as st
 import numpy as np
-from openai import OpenAI
 
 from utils.config import size_map_name_to_val, size_names, trust_questions
 from utils.data_utils import map_budget, map_followers, save_to_dataset, reset_form
-from utils.model_utils import load_artifacts, get_explainer, options_from_prefix, set_one_hot
+from utils.model_utils import load_artifacts, options_from_prefix, set_one_hot
 from utils.feedback_utils import save_feedback_to_dataset
 from utils.ui_utils import tooltip, inject_css
 
+openai.api_key = st.secrets.get("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
 inject_css(st)
 
 st.set_page_config(page_title="SME Strategy Recommender", page_icon="📊")
@@ -68,57 +69,42 @@ set_one_hot(row, "Followers_", followers_cat, follower_opts)
 
 X_new = pd.DataFrame([row], columns=feature_cols)
 
-@st.cache_resource
-def get_openai_client():
-    api_key = st.secrets.get("OPENAI_API_KEY") if "OPENAI_API_KEY" in st.secrets else os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise ValueError("No OpenAI API key found in st.secrets or environment variables")
-    return OpenAI(api_key=api_key)
-
-client = get_openai_client()
-
-
-def format_lime_explanation(explanation):
-    """
-    Takes lime_text explanation.as_list() output
-    and converts to a human-readable string
-    """
-    lines = []
-    for feat, weight in explanation.as_list():
-        lines.append(f"{feat} (weight: {weight:.3f})")
-    return "\n".join(lines)
-
-
-def explain_with_llm(explanation, prediction):
+def explain_with_llm():
     """
     Sends the actual LIME explanation + prediction to GPT
     and asks for a business-friendly overview
     """
-    features_text = format_lime_explanation(explanation)
 
-    prompt = f"""
-    You are a practical marketing strategist.
-    The model predicted: **{prediction}**
-    These are the most important features and their weights (from LIME XAI):
+    profile = {
+        "predicted_strategy": strategy,
+        "class_probabilities": proba if hasattr(model, "predict_proba") else None,
+        "industry": industry,
+        "business_size": size_name,
+        "digital_maturity": int(maturity),
+        "budget_eur": float(budget_num),
+        "followers": int(followers_num),
+        "readiness_avg": float(np.mean(list(trust_responses.values()))) if trust_responses else None,
+    }
 
-    {features_text}
-
-    Please explain concisely why the predicted strategy fits now, then provide 3 specific next steps for a 4-6 week pilot. Do not change the predicted label.
-    
-    Do not repeat their question.
-    """
-
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",   # cheap + fast, still strong
-        messages=[
-            {"role": "system", "content": "You are a helpful AI assistant for small business marketing."},
-            {"role": "user", "content": prompt}
-        ],
-        stop=["\n\n"]
+    sys_msg = (
+        "You are a practical marketing analyst. Explain concisely why the predicted strategy fits now, "
+        "then provide 3 specific next steps for a 4-6 week pilot. Do not change the predicted label."
     )
+    user_msg = "Business profile JSON:\n" + json.dumps(profile, indent=2)
 
-    # print(f"OpenAI response: {response}")
-    return response.choices[0].message.content
+    try:
+        resp = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "system", "content": sys_msg},
+                      {"role": "user",   "content": user_msg}],
+            temperature=0.3,
+            max_tokens=400,
+        )
+        text = resp.choices[0].message["content"].strip()
+        with st.expander("🧠 Suggestion & Why (AI-assisted)", expanded=True):
+            st.markdown(text)
+    except Exception as e:
+        st.info(f"(AI suggestion failed: {e})")
 
 
 if st.button("🔮 Get Recommendation"):
@@ -136,19 +122,7 @@ if st.button("🔮 Get Recommendation"):
             st.success(f"✅ Recommended Strategy: **{strategy}**")
             save_to_dataset(row, strategy, None, feature_cols, size_name, size_map_name_to_val, maturity_col, maturity, industry, budget_cat, followers_cat, budget_num, followers_num)
 
-        try:
-            explanation = get_explainer(model, feature_cols, label_enc).explain_instance(
-                X_new.iloc[0].values,
-                model.predict_proba,
-                num_features=5
-            )
-            # print(explanation.as_list())
-            response = explain_with_llm(explanation, strategy)
-
-            st.subheader("🔍 Why this recommendation?")
-            st.write(response)
-        except Exception as e:
-            st.write(f"Error: {e}")
+        explain_with_llm()
 
     except Exception as e:
         st.error(f"Prediction failed: {e}\n{traceback.format_exc()}")

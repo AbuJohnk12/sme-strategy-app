@@ -1,9 +1,7 @@
 import os
 import json
 import joblib
-import numpy as np
 import streamlit as st
-from lime.lime_tabular import LimeTabularExplainer
 
 @st.cache_resource
 def load_artifacts():
@@ -21,16 +19,6 @@ def load_artifacts():
         raw_cols = json.load(f)
         feature_cols = [c.strip() for c in raw_cols]
     return model, label_enc, feature_cols
-
-@st.cache_resource
-def get_explainer(_model, feature_cols, _label_enc):
-    explainer = LimeTabularExplainer(
-        training_data=np.zeros((1, len(feature_cols))),
-        feature_names=feature_cols,
-        class_names=list(_label_enc.classes_),
-        discretize_continuous=True
-    )
-    return explainer
 
 def options_from_prefix(prefix, feature_cols):
     options = set()
