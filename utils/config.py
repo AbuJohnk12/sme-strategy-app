@@ -2,30 +2,30 @@ size_map_name_to_val = {"Micro": 1, "Small": 2, "Medium": 3, "Large": 4}
 size_names = list(size_map_name_to_val.keys())
 
 trust_questions = {
-    "Our branding and first-touch messaging are designed to feel honest and genuine to new visitors.": 
+    "I want customers to perceive our brand as honest and genuine":
         "My customers perceive our brand as honest and genuine",
-    "We've drafted a consistent brand voice and message to use across all channels.": 
+    "I want our marketing messages to feel consistent and genuine":
         "Our marketing messages feel consistent and genuine",
-    "Our value proposition clearly explains the real benefit to customers.": 
+    "I want customers to believe we deliver real value":
         "Customers believe we care about delivering real value",
-    "Our website/communications include credible details (contact info, policies, proof) that signal reliability.": 
+    "I want customers to consider our brand reliable based on our communications":
         "Customers consider our brand reliable based on our communications",
-    "We have trust builders ready (about/team, testimonials pipeline, certifications/guarantees).": 
+    "I want our marketing to build trust in our brand":
         "Our marketing has built trust in our brand",
-    "Early users/testers would feel confident recommending us based on our planned experience/offer.": 
+    "I want customers to feel confident recommending our brand":
         "Customers feel confident recommending our brand",
-    "We have a repeatable plan to generate steady traffic and inquiries (content calendar/ads cadence).": 
+    "I want our marketing to generate steady customer responses":
         "Our marketing generates steady customer responses",
-    "We have content and hooks ready that typically drive meaningful engagement in our niche.": 
+    "I want our promotions to receive meaningful clicks and comments":
         "We receive meaningful comments and clicks on our promotion",
-    "We've set up ways to re-engage people (email list, remarketing, community, follow-ups).": 
+    "I want our campaigns to result in repeat interactions or interest":
         "Our campaigns result in repeat interactions or interest",
-    "Our starting budget has clear expected outcomes that would justify the spend.": 
+    "I want the returns to justify the marketing budget spent":
         "I feel the returns justify the marketing budget spent",
-    "The channels we're choosing are likely to be cost-effective for reaching our audience.": 
+    "I want our campaigns to drive cost-effective customer attention":
         "Our campaigns drive cost-effective customer attention",
-    "Our marketing plan connects to measurable growth goals (sign-ups/leads/sales).": 
+    "I want marketing to contribute positively to sales or customer growth":
         "Marketing contributes positively to sales or customer growth",
-    "We will switch channels/strategy quickly if data shows a better option.": 
+    "I am willing to switch from my current method if data shows a better approach":
         "If data showed a better marketing approach, I would switch from my current method",
 }
