@@ -35,7 +35,7 @@ follower_opts  = options_from_prefix("Followers_", feature_cols)
 st.subheader("Enter your business details")
 col1, col2 = st.columns(2)
 with col1:
-    size_name = st.selectbox("Business Size", size_names[1:], index=0, key="size_name")
+    size_name = st.selectbox("Business Size", size_names, index=0, key="size_name")
     st.markdown(f"""Digital Marketing Maturity {tooltip('How effectively your business uses digital tools (1=basic, 5=advanced)')}""", unsafe_allow_html=True)
     maturity  = st.slider("Rate from 1 to 5", 1, 5, 1, key="maturity")
     industry  = st.selectbox("Industry", industry_opts or ["Other"], key="industry")

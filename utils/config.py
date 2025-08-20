@@ -1,4 +1,4 @@
-size_map_name_to_val = {"Micro": 1, "Small": 2, "Medium": 3, "Large": 4}
+size_map_name_to_val = {"Micro": 1, "Small": 2, "Medium": 3}
 size_names = list(size_map_name_to_val.keys())
 
 trust_questions = {
