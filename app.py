@@ -9,8 +9,8 @@ import streamlit as st
 import numpy as np
 
 from utils.config import size_map_name_to_val, size_names, trust_questions
-from utils.data_utils import map_budget, map_followers, save_to_dataset, reset_form
-from utils.model_utils import load_artifacts, options_from_prefix, set_one_hot
+from utils.data_utils import industry_opts, map_budget, map_followers, save_to_dataset, reset_form
+from utils.model_utils import load_artifacts, set_one_hot
 from utils.feedback_utils import save_feedback_to_dataset
 from utils.ui_utils import tooltip, inject_css
 
@@ -29,16 +29,13 @@ if not maturity_col:
     st.error("❌ Cannot find the Digital Maturity column in feature_columns")
     st.stop()
 
-industry_opts  = options_from_prefix("Industry_", feature_cols)
-budget_opts    = options_from_prefix("Budget_", feature_cols)
-follower_opts  = options_from_prefix("Followers_", feature_cols)
-
 st.subheader("Enter your business details")
+business_name = st.text_input("Name of your business", key="business_name")
 col1, col2 = st.columns(2)
 with col1:
     size_name = st.selectbox("Business Size (No.of Employees)", size_names, index=0, key="size_name")
     st.markdown(f"""Digital Marketing Maturity {tooltip('How effectively your business uses digital tools (1=basic, 5=advanced)')}""", unsafe_allow_html=True)
-    maturity  = st.slider("Rate from 1 to 5", 1, 5, 1, key="maturity")
+    maturity  = st.slider("Rate from 1 to 5", 1, 5, key="maturity")
     industry  = st.selectbox("Industry", industry_opts or ["Other"], key="industry")
 with col2:
     budget_num    = st.number_input("Monthly Marketing Budget (€)", min_value=0, step=100, value=0, key="budget_num")
@@ -48,26 +45,25 @@ trust_responses = {}
 with st.expander("🔍 Additional Trust Questions (Optional)", expanded=False):
     for ui_text, backend_name in trust_questions.items():
         if backend_name in feature_cols:
-            value = st.slider(ui_text, 1, 5, 1, key=ui_text)
+            value = st.slider(ui_text, 1, 5, key=ui_text)
             trust_responses[backend_name] = value
 
-st.button("🔄 Reset Form", on_click=lambda: reset_form(st, trust_questions, feature_cols, industry_opts))
+st.button("🔄 Reset Form", on_click=lambda: reset_form(st, trust_responses))
 
-budget_cat    = map_budget(float(budget_num))
-followers_cat = map_followers(float(followers_num))
 
 row = {c: 0 for c in feature_cols}
-if "Business Size (No.of Employees)" in row:
-    row["Business Size (No.of Employees)"] = size_map_name_to_val[size_name]
+
+row["Name of your Business:"] = business_name.strip() if business_name else "Unknown"
+row["Business Size"] = size_map_name_to_val[size_name]
 row[maturity_col] = int(maturity)
+row["Industry"] = f"Industry_{industry}"
+row["Budget"]    = float(budget_num)
+row["Followers"] = map_followers(float(followers_num))
 for question, value in trust_responses.items():
     row[question] = value
 
-set_one_hot(row, "Industry_", industry, industry_opts)
-set_one_hot(row, "Budget_", budget_cat, budget_opts)
-set_one_hot(row, "Followers_", followers_cat, follower_opts)
-
 X_new = pd.DataFrame([row], columns=feature_cols)
+st.write(X_new)
 
 def explain_with_llm():
     """
@@ -77,10 +73,10 @@ def explain_with_llm():
 
     profile = {
         "predicted_strategy": strategy,
-        "class_probabilities": proba if hasattr(model, "predict_proba") else None,
+        "confidence": proba if hasattr(model, "predict_proba") else None,
         "industry": industry,
         "business_size": size_name,
-        "digital_maturity": int(maturity),
+        "digital_maturity(1=basic, 5=advanced)": int(maturity),
         "budget_eur": float(budget_num),
         "followers": int(followers_num),
         "readiness_avg": float(np.mean(list(trust_responses.values()))) if trust_responses else None,
@@ -117,10 +113,8 @@ if st.button("🔮 Get Recommendation"):
             proba = model.predict_proba(X_new)[0][pred]
             st.success(f"✅ Recommended Strategy: **{strategy}**")
             st.write(f"Confidence: **{proba*100:.1f}%**")
-            save_to_dataset(row, strategy, proba*100, feature_cols, size_name, size_map_name_to_val, maturity_col, maturity, industry, budget_cat, followers_cat, budget_num, followers_num)
         else:
             st.success(f"✅ Recommended Strategy: **{strategy}**")
-            save_to_dataset(row, strategy, None, feature_cols, size_name, size_map_name_to_val, maturity_col, maturity, industry, budget_cat, followers_cat, budget_num, followers_num)
 
         explain_with_llm()
 
@@ -159,6 +153,16 @@ if "strategy" in st.session_state and st.session_state.strategy:
     if st.session_state.feedback_submitted:
         if st.session_state.feedback == "Like":
             st.success('Thank you for your feedback! ❤️')
+            save_to_dataset(row, st.session_state.strategy, proba*100 if 'proba' in locals() else None, feedback=True)
+
         elif st.session_state.feedback == "Dislike":
             st.info('Aw! We will work on improving. Thanks for your feedback.')
-
+            save_to_dataset(row, st.session_state.strategy, proba*100 if 'proba' in locals() else None, feedback=False)
+            # with st.expander("Help us improve (optional)", expanded=True):
+            #     feedback_text = st.text_area("What would have made this more useful?", key="feedback_text")
+            #     if st.button("Submit Feedback", key="submit_feedback_btn"):
+            #         if feedback_text and feedback_text.strip():
+            #             save_feedback_to_dataset(st.session_state.strategy, "Dislike", comments=feedback_text.strip())
+            #             st.success("Thanks for your detailed feedback! 🙏")
+            #         else:
+            #             st.warning("Please enter some feedback before submitting.")

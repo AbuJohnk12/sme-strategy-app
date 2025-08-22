@@ -20,14 +20,6 @@ def load_artifacts():
         feature_cols = [c.strip() for c in raw_cols]
     return model, label_enc, feature_cols
 
-def options_from_prefix(prefix, feature_cols):
-    options = set()
-    for col in feature_cols:
-        if col.startswith(prefix):
-            option = col[len(prefix):].strip()
-            options.add(option)
-    return sorted(options)
-
 def set_one_hot(row, prefix, selected_value, all_options):
     selected_clean = selected_value.lower().strip().replace(" ", "").replace("-", "")
     for option in all_options:
