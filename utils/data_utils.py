@@ -65,7 +65,7 @@ def save_to_dataset(row, strategy, confidence=None, feedback=False, threshold=80
         print(f"Skipped saving: low confidence ({confidence}) and no feedback.")
 
 
-def reset_form(st):
+def reset_form(st, trust_questions):
     st.session_state.size_name = size_names[0]
     st.session_state.maturity = 1
     st.session_state.industry = industry_opts[0] if industry_opts else "Other"
