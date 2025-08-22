@@ -33,13 +33,13 @@ st.subheader("Enter your business details")
 business_name = st.text_input("Name of your business", key="business_name")
 col1, col2 = st.columns(2)
 with col1:
-    size_name = st.selectbox("Business Size (No.of Employees)", size_names, index=0, key="size_name")
+    size_name = st.selectbox("Business Size (No.of Employees)", size_names, key="size_name")
     st.markdown(f"""Digital Marketing Maturity {tooltip('How effectively your business uses digital tools (1=basic, 5=advanced)')}""", unsafe_allow_html=True)
     maturity  = st.slider("Rate from 1 to 5", 1, 5, key="maturity")
     industry  = st.selectbox("Industry", industry_opts or ["Other"], key="industry")
 with col2:
-    budget_num    = st.number_input("Monthly Marketing Budget (€)", min_value=0, step=100, value=0, key="budget_num")
-    followers_num = st.number_input("Total Social Followers", min_value=0, step=100, value=0, key="followers_num")
+    budget_num    = st.number_input("Monthly Marketing Budget (€)", min_value=0, step=100, key="budget_num")
+    followers_num = st.number_input("Total Social Followers", min_value=0, step=100, key="followers_num")
 
 trust_responses = {}
 with st.expander("🔍 Additional Trust Questions (Optional)", expanded=False):
@@ -48,8 +48,7 @@ with st.expander("🔍 Additional Trust Questions (Optional)", expanded=False):
             value = st.slider(ui_text, 1, 5, key=ui_text)
             trust_responses[backend_name] = value
 
-st.button("🔄 Reset Form", on_click=lambda: reset_form(st, trust_responses))
-
+st.button("🔄 Reset Form", on_click=lambda: reset_form(st))
 
 row = {c: 0 for c in feature_cols}
 
